@@ -320,5 +320,3 @@ export default function QuantumFlowOS() {
   // ---------------------------
   // Export default
   // ---------------------------
-  export default QuantumFlowOS
-
