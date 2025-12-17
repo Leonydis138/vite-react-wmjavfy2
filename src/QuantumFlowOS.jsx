@@ -17,6 +17,145 @@ import {
 } from 'lucide-react';
 
 // ============================================================================
+// TOP MENU COMPONENT
+// ============================================================================
+
+const TopMenu = () => {
+  const [activeMenu, setActiveMenu] = useState(null);
+  const menuRef = useRef(null);
+
+  const menuItems = {
+    file: [
+      { label: "New Window", shortcut: "Ctrl+N", action: () => console.log("New Window") },
+      { label: "Open...", shortcut: "Ctrl+O", action: () => console.log("Open") },
+      { label: "Save", shortcut: "Ctrl+S", action: () => console.log("Save") },
+      { type: "separator" },
+      { label: "Exit", shortcut: "Alt+F4", action: () => console.log("Exit") }
+    ],
+    edit: [
+      { label: "Undo", shortcut: "Ctrl+Z", action: () => console.log("Undo") },
+      { label: "Redo", shortcut: "Ctrl+Y", action: () => console.log("Redo") },
+      { type: "separator" },
+      { label: "Cut", shortcut: "Ctrl+X", action: () => console.log("Cut") },
+      { label: "Copy", shortcut: "Ctrl+C", action: () => console.log("Copy") },
+      { label: "Paste", shortcut: "Ctrl+V", action: () => console.log("Paste") }
+    ],
+    view: [
+      { label: "Zoom In", shortcut: "Ctrl++", action: () => console.log("Zoom In") },
+      { label: "Zoom Out", shortcut: "Ctrl+-", action: () => console.log("Zoom Out") },
+      { label: "Reset Zoom", shortcut: "Ctrl+0", action: () => console.log("Reset Zoom") },
+      { type: "separator" },
+      { label: "Fullscreen", shortcut: "F11", action: () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      }}
+    ]
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setActiveMenu(null);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={menuRef} className="relative">
+      <div className="flex gap-4">
+        <div className="relative">
+          <button 
+            className={`px-2 py-1 text-xs font-medium rounded hover:bg-white/10 transition-colors ${activeMenu === 'file' ? 'bg-white/10' : ''}`}
+            onClick={() => setActiveMenu(activeMenu === 'file' ? null : 'file')}
+          >
+            File
+          </button>
+          {activeMenu === 'file' && (
+            <div className="absolute top-full left-0 mt-1 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl z-[10000]">
+              {menuItems.file.map((item, i) => (
+                item.type === "separator" ? (
+                  <div key={i} className="h-px bg-slate-700 my-1" />
+                ) : (
+                  <button
+                    key={i}
+                    className="w-full px-3 py-2 text-left text-xs text-slate-300 hover:bg-slate-800 flex justify-between items-center"
+                    onClick={item.action}
+                  >
+                    <span>{item.label}</span>
+                    <span className="text-slate-500 text-[10px]">{item.shortcut}</span>
+                  </button>
+                )
+              ))}
+            </div>
+          )}
+        </div>
+        
+        <div className="relative">
+          <button 
+            className={`px-2 py-1 text-xs font-medium rounded hover:bg-white/10 transition-colors ${activeMenu === 'edit' ? 'bg-white/10' : ''}`}
+            onClick={() => setActiveMenu(activeMenu === 'edit' ? null : 'edit')}
+          >
+            Edit
+          </button>
+          {activeMenu === 'edit' && (
+            <div className="absolute top-full left-0 mt-1 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl z-[10000]">
+              {menuItems.edit.map((item, i) => (
+                item.type === "separator" ? (
+                  <div key={i} className="h-px bg-slate-700 my-1" />
+                ) : (
+                  <button
+                    key={i}
+                    className="w-full px-3 py-2 text-left text-xs text-slate-300 hover:bg-slate-800 flex justify-between items-center"
+                    onClick={item.action}
+                  >
+                    <span>{item.label}</span>
+                    <span className="text-slate-500 text-[10px]">{item.shortcut}</span>
+                  </button>
+                )
+              ))}
+            </div>
+          )}
+        </div>
+        
+        <div className="relative">
+          <button 
+            className={`px-2 py-1 text-xs font-medium rounded hover:bg-white/10 transition-colors ${activeMenu === 'view' ? 'bg-white/10' : ''}`}
+            onClick={() => setActiveMenu(activeMenu === 'view' ? null : 'view')}
+          >
+            View
+          </button>
+          {activeMenu === 'view' && (
+            <div className="absolute top-full left-0 mt-1 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl z-[10000]">
+              {menuItems.view.map((item, i) => (
+                item.type === "separator" ? (
+                  <div key={i} className="h-px bg-slate-700 my-1" />
+                ) : (
+                  <button
+                    key={i}
+                    className="w-full px-3 py-2 text-left text-xs text-slate-300 hover:bg-slate-800 flex justify-between items-center"
+                    onClick={item.action}
+                  >
+                    <span>{item.label}</span>
+                    <span className="text-slate-500 text-[10px]">{item.shortcut}</span>
+                  </button>
+                )
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
 // SYSTEM CONSTANTS
 // ============================================================================
 
@@ -369,6 +508,10 @@ const usePersistentState = (key, defaultValue) => {
 // UI COMPONENTS
 // ============================================================================
 
+// ============================================================================
+// UI COMPONENTS - FIXED VERSION
+// ============================================================================
+
 const Window = ({ app, onClose, onMinimize, onMaximize, onFocus, theme, children }) => {
   if (app.minimized) return null;
 
@@ -391,9 +534,36 @@ const Window = ({ app, onClose, onMinimize, onMaximize, onFocus, theme, children
            {app.title}
         </div>
         <div className="flex items-center gap-1.5">
-           <button onClick={(e) => { e.stopPropagation(); onMinimize(app.id); }} className="w-3 h-3 rounded-full bg-yellow-500/20 hover:bg-yellow-500 border border-yellow-500/50 transition-colors" />
-           <button onClick={(e) => { e.stopPropagation(); onMaximize(app.id); }} className="w-3 h-3 rounded-full bg-emerald-500/20 hover:bg-emerald-500 border border-emerald-500/50 transition-colors" />
-           <button onClick={(e) => { e.stopPropagation(); onClose(app.id); }} className="w-3 h-3 rounded-full bg-red-500/20 hover:bg-red-500 border border-red-500/50 transition-colors" />
+           <button 
+             onClick={(e) => { 
+               e.stopPropagation(); 
+               onMinimize(app.id); 
+             }} 
+             className="w-3 h-3 rounded-full bg-yellow-500/20 hover:bg-yellow-500 border border-yellow-500/50 transition-colors flex items-center justify-center"
+             title="Minimize"
+           >
+             <Minus size={8} className="text-yellow-500" />
+           </button>
+           <button 
+             onClick={(e) => { 
+               e.stopPropagation(); 
+               onMaximize(app.id); 
+             }} 
+             className="w-3 h-3 rounded-full bg-emerald-500/20 hover:bg-emerald-500 border border-emerald-500/50 transition-colors flex items-center justify-center"
+             title={app.maximized ? "Restore" : "Maximize"}
+           >
+             {app.maximized ? <Minimize2 size={8} className="text-emerald-500" /> : <Maximize2 size={8} className="text-emerald-500" />}
+           </button>
+           <button 
+             onClick={(e) => { 
+               e.stopPropagation(); 
+               onClose(app.id); 
+             }} 
+             className="w-3 h-3 rounded-full bg-red-500/20 hover:bg-red-500 border border-red-500/50 transition-colors flex items-center justify-center"
+             title="Close"
+           >
+             <X size={8} className="text-red-500" />
+           </button>
         </div>
       </div>
       <div className="flex-1 overflow-hidden relative flex flex-col">
@@ -916,31 +1086,71 @@ const QuantumFlowOS = () => {
   }, []);
 
   // Window Manager
-  const openApp = (type, props = {}) => {
-    const id = Date.now() + Math.random();
-    const config = {
-      terminal: { title: 'Quantum Shell', icon: Terminal, w: 600, h: 400 },
-      explorer: { title: 'File Explorer', icon: Folder, w: 700, h: 500 },
-      editor: { title: props.filename || 'Nexus IDE', icon: Code, w: 800, h: 600 },
-      settings: { title: 'System Settings', icon: Settings, w: 800, h: 550 },
-      browser: { title: 'Nexus Web', icon: Globe2, w: 900, h: 650 },
-    }[type];
+  // Update the openApp function in QuantumFlowOS component:
 
-    if (!config) return;
+const openApp = (type, props = {}) => {
+  const id = Date.now() + Math.random();
+  
+  // Responsive window sizes based on screen width
+  const isMobile = window.innerWidth < 768;
+  
+  const config = {
+    terminal: { 
+      title: 'Quantum Shell', 
+      icon: Terminal, 
+      w: isMobile ? window.innerWidth * 0.95 : 600, 
+      h: isMobile ? window.innerHeight * 0.7 : 400 
+    },
+    explorer: { 
+      title: 'File Explorer', 
+      icon: Folder, 
+      w: isMobile ? window.innerWidth * 0.95 : 700, 
+      h: isMobile ? window.innerHeight * 0.7 : 500 
+    },
+    editor: { 
+      title: props.filename || 'Nexus IDE', 
+      icon: Code, 
+      w: isMobile ? window.innerWidth * 0.95 : 800, 
+      h: isMobile ? window.innerHeight * 0.7 : 600 
+    },
+    settings: { 
+      title: 'System Settings', 
+      icon: Settings, 
+      w: isMobile ? window.innerWidth * 0.95 : 800, 
+      h: isMobile ? window.innerHeight * 0.7 : 550 
+    },
+    browser: { 
+      title: 'Nexus Web', 
+      icon: Globe2, 
+      w: isMobile ? window.innerWidth * 0.95 : 900, 
+      h: isMobile ? window.innerHeight * 0.7 : 650 
+    },
+  }[type];
 
-    setApps(prev => {
-      // Deactivate all other apps
-      const deactivated = prev.map(a => ({ ...a, active: false }));
-      
-      return [...deactivated, {
-        id, type, ...config, props, active: true,
-        x: 100 + (prev.length * 30), y: 100 + (prev.length * 30),
-        zIndex: nextZ, minimized: false, maximized: false,
-        dirty: false
-      }];
-    });
-    setNextZ(z => z + 1);
-  };
+  if (!config) return;
+
+  setApps(prev => {
+    // Deactivate all other apps
+    const deactivated = prev.map(a => ({ ...a, active: false }));
+    
+    // Center the window on screen
+    const x = (window.innerWidth - config.w) / 2;
+    const y = (window.innerHeight - config.h) / 2;
+    
+    return [...deactivated, {
+      id, type, ...config, props, active: true,
+      x: Math.max(0, x), // Ensure window doesn't go off-screen
+      y: Math.max(0, y), // Ensure window doesn't go off-screen
+      w: config.w,
+      h: config.h,
+      zIndex: nextZ, 
+      minimized: false, 
+      maximized: false,
+      dirty: false
+    }];
+  });
+  setNextZ(z => z + 1);
+};
 
   const closeApp = (id) => setApps(prev => prev.filter(a => a.id !== id));
   
@@ -953,9 +1163,42 @@ const QuantumFlowOS = () => {
     setApps(prev => prev.map(a => a.id === id ? { ...a, minimized: true, active: false } : a));
   };
 
-  const maximizeApp = (id) => {
-    setApps(prev => prev.map(a => a.id === id ? { ...a, maximized: !a.maximized } : a));
-  };
+  // In the QuantumFlowOS component, update maximizeApp function:
+
+const maximizeApp = (id) => {
+  setApps(prev => prev.map(a => {
+    if (a.id === id) {
+      const newMaximized = !a.maximized;
+      
+      if (newMaximized) {
+        // Store original position and size
+        return {
+          ...a,
+          maximized: true,
+          originalX: a.x,
+          originalY: a.y,
+          originalW: a.w,
+          originalH: a.h,
+          x: 0,
+          y: 0,
+          w: window.innerWidth,
+          h: window.innerHeight - 48 // Account for taskbar
+        };
+      } else {
+        // Restore original position and size
+        return {
+          ...a,
+          maximized: false,
+          x: a.originalX || 100,
+          y: a.originalY || 100,
+          w: a.originalW || 600,
+          h: a.originalH || 400
+        };
+      }
+    }
+    return a;
+  }));
+};
 
   if (!booted) return <BootLoader onComplete={() => setBooted(true)} />;
 
@@ -1041,30 +1284,28 @@ const QuantumFlowOS = () => {
       />
 
       {/* TOP BAR */}
-      <div className="absolute top-0 left-0 right-0 h-8 bg-black/20 backdrop-blur-sm z-[9998] flex justify-between px-4 items-center text-xs font-medium text-slate-300">
-         <div className="flex gap-4">
-            <span className="font-bold hover:text-white cursor-pointer">QuantumFlow {SYSTEM_VERSION}</span>
-            <span className="hover:text-white cursor-pointer">File</span>
-            <span className="hover:text-white cursor-pointer">Edit</span>
-            <span className="hover:text-white cursor-pointer">View</span>
-         </div>
-         <div className="flex gap-4 items-center">
-            <div className="flex items-center gap-2 hover:text-white cursor-pointer">
-              <div className="relative">
-                <div className="absolute inset-0 bg-cyan-500 blur opacity-20" />
-                <div className="relative flex items-center gap-1">
-                  <Cpu size={12} />
-                  <span className="text-[10px]">42%</span>
-                </div>
-              </div>
-            </div>
-            <div className="hover:text-white cursor-pointer">
-              <div className="text-[10px] font-mono">{time.toLocaleTimeString()}</div>
-            </div>
-         </div>
+      {/* TOP BAR WITH WORKING MENUS */}
+<div className="absolute top-0 left-0 right-0 h-8 bg-black/40 backdrop-blur-lg z-[9998] flex justify-between px-4 items-center border-b border-white/10">
+  <div className="flex items-center gap-4">
+    <span className="font-bold text-xs text-white">QuantumFlow {SYSTEM_VERSION}</span>
+    <TopMenu />
+  </div>
+  <div className="flex gap-4 items-center">
+    <div className="flex items-center gap-2 hover:text-white cursor-pointer">
+      <div className="relative">
+        <div className="absolute inset-0 bg-cyan-500 blur opacity-20" />
+        <div className="relative flex items-center gap-1">
+          <Cpu size={12} />
+          <span className="text-[10px]">42%</span>
+        </div>
       </div>
-
     </div>
+    <div className="hover:text-white cursor-pointer">
+      <div className="text-[10px] font-mono">{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+    </div>
+  </div>
+</div>
+      
   );
 };
 
