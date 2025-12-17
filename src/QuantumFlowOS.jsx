@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Terminal, Activity, Cpu, Server, Shield, Zap, Database, Lock, 
@@ -16,10 +15,6 @@ import {
   MessageCircle, StickyNote, Speaker, Headphones, Repeat, Shuffle,
   Users, Send, Paperclip, Fingerprint, Network, Scan, Minimize
 } from 'lucide-react';
-
-// ============================================================================
-// SYSTEM CONSTANTS
-// ============================================================================
 
 const SYSTEM_VERSION = "v19.1 Zenith";
 const STORAGE_KEY = "qf_os_v19_root";
@@ -80,10 +75,6 @@ const DEFAULT_FS = {
     }
   }
 };
-
-// ============================================================================
-// BOOTLOADER
-// ============================================================================
 
 const BootLoader = ({ onComplete }) => {
   const [log, setLog] = useState([]);
@@ -146,10 +137,6 @@ const BootLoader = ({ onComplete }) => {
     </div>
   );
 };
-
-// ============================================================================
-// LIVE WALLPAPER ENGINE
-// ============================================================================
 
 const WallpaperEngine = ({ theme }) => {
   const canvasRef = useRef(null);
@@ -277,10 +264,6 @@ const WallpaperEngine = ({ theme }) => {
   return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />;
 };
 
-// ============================================================================
-// SYSTEM HOOKS
-// ============================================================================
-
 const usePersistentState = (key, defaultValue) => {
   const [state, setState] = useState(() => {
     try {
@@ -291,10 +274,6 @@ const usePersistentState = (key, defaultValue) => {
   useEffect(() => localStorage.setItem(key, JSON.stringify(state)), [key, state]);
   return [state, setState];
 };
-
-// ============================================================================
-// UI COMPONENTS
-// ============================================================================
 
 const Window = ({ app, onClose, onMinimize, onMaximize, onFocus, theme, children }) => {
   if (app.minimized) return null;
@@ -329,10 +308,6 @@ const Window = ({ app, onClose, onMinimize, onMaximize, onFocus, theme, children
     </div>
   );
 };
-
-// ============================================================================
-// APPS
-// ============================================================================
 
 const AppIDE = ({ theme, filename, content, path, setFs }) => {
   const [code, setCode] = useState(content || "");
@@ -950,6 +925,3 @@ const QuantumFlowOS = () => {
     </div>
   );
 };
-
-export default QuantumFlowOS;
-```
