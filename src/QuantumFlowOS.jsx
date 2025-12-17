@@ -444,64 +444,88 @@ const AppTerminal = ({ theme, fs, setFs, openApp }) => {
   );
 };
 
-// --- APP: OMNI-SEARCH (Spotlight) ---
-const OmniSearch = ({ isOpen, onClose, openApp, theme }) => {
-  if (!isOpen) return null;
-  
-  const [query, setQuery] = useState("");
-  const inputRef = useRef(null);
+// --- APP: FILE EXPLORER ---
+const AppExplorer = ({ theme, fs, setFs, openApp }) => {
+  const [currentPath, setCurrentPath] = useState(["home", "admin"]);
+  const [selected, setSelected] = useState(null);
 
-  useEffect(() => inputRef.current?.focus(), [isOpen]);
+  const getCurrentDir = () => {
+    let dir = fs;
+    for (const p of currentPath) dir = dir[p];
+    return dir;
+  };
 
-  const items = [
-     { id: 'terminal', label: 'Terminal', icon: Terminal, type: 'App' },
-     { id: 'explorer', label: 'File Explorer', icon: Folder, type: 'App' },
-     { id: 'settings', label: 'Settings', icon: Settings, type: 'System' },
-     { id: 'browser', label: 'Nexus Web', icon: Globe2, type: 'App' },
-     { id: 'shutdown', label: 'Shutdown System', icon: Power, type: 'Command' },
-  ].filter(i => i.label.toLowerCase().includes(query.toLowerCase()));
+  const handleBack = () => {
+    if (currentPath.length > 0) {
+      setCurrentPath(currentPath.slice(0, -1));
+    }
+  };
+
+  const handleDoubleClick = (name, item) => {
+    if (item.type === "file") {
+      openApp('editor', { 
+        filename: name, 
+        content: item.content,
+        path: [...currentPath, name]
+      });
+    } else {
+      setCurrentPath([...currentPath, name]);
+    }
+  };
 
   return (
-     <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-[20vh]" onClick={onClose}>
-        <div className="w-[600px] bg-[#1a1a20] border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95" onClick={e => e.stopPropagation()}>
-           <div className="flex items-center gap-4 p-4 border-b border-slate-700">
-              <Search size={20} className={theme.primary} />
-              <input 
-                 ref={inputRef}
-                 className="flex-1 bg-transparent text-xl text-white outline-none placeholder-slate-600 font-light"
-                 placeholder="Search QuantumFlow..."
-                 value={query}
-                 onChange={e => setQuery(e.target.value)}
-                 onKeyDown={e => {
-                    if (e.key === 'Enter' && items.length > 0) {
-                       openApp(items[0].id);
-                       onClose();
-                    }
-                 }}
-              />
-              <div className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-400">ESC</div>
-           </div>
-           <div className="max-h-[400px] overflow-y-auto p-2">
-              {items.map((item, i) => (
-                 <div 
-                    key={i} 
-                    className={`flex items-center gap-4 p-3 rounded-lg cursor-pointer ${i === 0 ? 'bg-blue-600 text-white' : 'hover:bg-white/5 text-slate-300'}`}
-                    onClick={() => { openApp(item.id); onClose(); }}
-                 >
-                    <item.icon size={20} />
-                    <div className="flex-1">
-                       <div className="text-sm font-medium">{item.label}</div>
-                       <div className={`text-[10px] ${i===0 ? 'text-blue-200' : 'text-slate-500'}`}>{item.type}</div>
-                    </div>
-                    {i === 0 && <CornerDownLeft size={16} className="text-blue-200" />}
-                 </div>
-              ))}
-              {items.length === 0 && <div className="p-4 text-center text-slate-500">No results found</div>}
-           </div>
+    <div className="h-full flex flex-col bg-black/50">
+      {/* Path Bar */}
+      <div className="flex items-center gap-2 p-3 border-b border-white/10 bg-black/30">
+        <button onClick={handleBack} className="p-1.5 rounded hover:bg-white/10">
+          <ChevronUp size={14} className="rotate-270" />
+        </button>
+        <div className="flex items-center gap-1 text-xs text-slate-400">
+          {currentPath.map((p, i) => (
+            <React.Fragment key={i}>
+              <span 
+                className="hover:text-white cursor-pointer"
+                onClick={() => setCurrentPath(currentPath.slice(0, i + 1))}
+              >
+                {p}
+              </span>
+              {i < currentPath.length - 1 && <ChevronRight size={10} />}
+            </React.Fragment>
+          ))}
         </div>
-     </div>
+      </div>
+
+      {/* File List */}
+      <div className="flex-1 overflow-auto p-4">
+        <div className="grid grid-cols-4 gap-4">
+          {Object.entries(getCurrentDir() || {}).map(([name, item]) => (
+            <div
+              key={name}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg cursor-pointer transition-all ${selected === name ? 'bg-cyan-500/20 border border-cyan-500/50' : 'hover:bg-white/5'}`}
+              onClick={() => setSelected(name)}
+              onDoubleClick={() => handleDoubleClick(name, item)}
+            >
+              <div className="p-3 rounded-full bg-white/5 mb-2">
+                {item.type === "file" ? (
+                  <File size={24} className="text-slate-300" />
+                ) : (
+                  <Folder size={24} className="text-amber-400" />
+                )}
+              </div>
+              <div className="text-xs text-center text-slate-300 truncate w-full">{name}</div>
+              <div className="text-[10px] text-slate-500 mt-1 uppercase">
+                {item.type}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Status Bar */}
+      <div className="border-t border-white/10 p-2 flex justify-between text-xs text-slate-500">
+        <div>{Object.keys(getCurrentDir() || {}).length} items</div>
+        <div>System FS</div>
+      </div>
+    </div>
   );
 };
-
-// ============================================================================
-// LOCK SCREEN (BI
