@@ -529,6 +529,3 @@ const AppExplorer = ({ theme, fs, setFs, openApp }) => {
     </div>
   );
 };
-
-// --- APP: SETTINGS ---
-const AppSettings = ({
