@@ -1,18 +1,3 @@
-export default function QuantumFlowOS() {
-  return (
-    <div
-      style={{
-        background: '#111',
-        color: '#0f0',
-        height: '100vh',
-        padding: 20
-      }}
-    >
-      QuantumFlow OS v19 — ONLINE
-    </div>
-  )
-}
-
 import React, { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext } from 'react';
 import { 
   Terminal, Activity, Cpu, Server, Shield, Zap, Database, Lock, 
@@ -544,3 +529,18 @@ const AppExplorer = ({ theme, fs, setFs, openApp }) => {
     </div>
   );
 };
+
+export default function QuantumFlowOS() {
+  return (
+    <div
+      style={{
+        background: '#111',
+        color: '#0f0',
+        height: '100vh',
+        padding: 20
+      }}
+    >
+      QuantumFlow OS v19 — ONLINE
+    </div>
+  )
+}
