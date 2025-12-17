@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Terminal, Activity, Cpu, Server, Shield, Zap, Database, Lock, 
@@ -97,21 +96,21 @@ const BootLoader = ({ onComplete }) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     const steps = [
-        "Loading core configuration",
-        "Initializing security systems",
-        "Starting cache engine",
-        "Loading AI models",
-        "Initializing blockchain",
-        "Connecting to cloud providers",
-        "Starting IoT platform",
-        "Loading analytics datasets",
-        "Initializing quantum simulator",
-        "Starting monitoring daemon",
-        "Launching API gateway",
-        "Loading automation workflows",
-        "Preparing deployment systems",
-        "Starting backup scheduler",
-        "Finalizing initialization"
+      "Loading core configuration",
+      "Initializing security systems",
+      "Starting cache engine",
+      "Loading AI models",
+      "Initializing blockchain",
+      "Connecting to cloud providers",
+      "Starting IoT platform",
+      "Loading analytics datasets",
+      "Initializing quantum simulator",
+      "Starting monitoring daemon",
+      "Launching API gateway",
+      "Loading automation workflows",
+      "Preparing deployment systems",
+      "Starting backup scheduler",
+      "Finalizing initialization"
     ];
     
     let step = 0;
@@ -131,7 +130,7 @@ const BootLoader = ({ onComplete }) => {
       setLog(prev => [...prev, steps[step]]);
       setProgress(((step + 1) / steps.length) * 100);
       step++;
-    }, 100); // Faster boot
+    }, 100); // Reduced interval for faster boot
 
     // Cleanup function
     return () => {
@@ -142,24 +141,42 @@ const BootLoader = ({ onComplete }) => {
 
   return (
     <div className="fixed inset-0 bg-black text-cyan-500 font-mono text-xs flex flex-col items-center justify-center z-[9999]">
-       <div className="relative mb-8">
-         <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-20 animate-pulse" />
-         <Hexagon size={96} className="relative z-10 animate-spin text-cyan-400" strokeWidth={0.5} />
-         <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-3xl tracking-tighter">QF</div>
-       </div>
-       
-       <div className="w-96 space-y-4">
-          <div className="flex justify-between text-[10px] uppercase text-slate-500">
-             <span>KERNEL_INIT_SEQUENCE</span>
-             <span>{Math.round(progress)}%</span>
-          </div>
-          <div className="h-0.5 bg-slate-900 overflow-hidden relative">
-             <div className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_20px_currentColor]" style={{ width: `${progress}%` }} />
-          </div>
-          <div className="h-24 font-mono text-[10px] text-slate-500 flex flex-col-reverse overflow-hidden border-l border-slate-800 pl-3">
-             {log.map((l, i) => <div key={i} className="animate-in slide-in-from-left-2 fade-in"><span className="text-cyan-600">OK</span> {l}...</div>).reverse()}
-          </div>
-       </div>
+      <div className="relative mb-8">
+        <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-20 animate-pulse" />
+        {/* Hexagon icon without importing it again */}
+        <div className="relative z-10 animate-spin text-cyan-400" style={{ width: 96, height: 96 }}>
+          <svg 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="0.5"
+            className="w-full h-full"
+          >
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+          </svg>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-3xl tracking-tighter">QF</div>
+      </div>
+      
+      <div className="w-96 space-y-4">
+        <div className="flex justify-between text-[10px] uppercase text-slate-500">
+          <span>KERNEL_INIT_SEQUENCE</span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+        <div className="h-0.5 bg-slate-900 overflow-hidden relative">
+          <div 
+            className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_20px_currentColor]" 
+            style={{ width: `${progress}%` }} 
+          />
+        </div>
+        <div className="h-24 font-mono text-[10px] text-slate-500 flex flex-col-reverse overflow-hidden border-l border-slate-800 pl-3">
+          {log.map((l, i) => (
+            <div key={i} className="animate-in slide-in-from-left-2 fade-in">
+              <span className="text-cyan-600">OK</span> {l}...
+            </div>
+          )).reverse()}
+        </div>
+      </div>
     </div>
   );
 };
