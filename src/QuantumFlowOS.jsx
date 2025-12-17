@@ -85,11 +85,9 @@ const DEFAULT_FS = {
 // ============================================================================
 
 const BootLoader = ({ onComplete }) => {
-  const [log, setLog] = useState([]);
   const [progress, setProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
-  const mountedRef = useRef(true);
-
+  const [logs, setLogs] = useState([]);
+  const totalSteps = 15;
   const steps = [
     "Loading core configuration",
     "Initializing security systems",
@@ -109,47 +107,39 @@ const BootLoader = ({ onComplete }) => {
   ];
 
   useEffect(() => {
-    mountedRef.current = true;
-    
-    const totalSteps = steps.length;
-    let timeoutIds = [];
-    let currentStepIndex = 0;
+    let currentStep = 0;
+    let mounted = true;
 
-    const processNextStep = () => {
-      if (!mountedRef.current || currentStepIndex >= totalSteps) {
-        // Completion logic
-        if (mountedRef.current && currentStepIndex >= totalSteps) {
+    const runStep = () => {
+      if (!mounted || currentStep >= totalSteps) {
+        if (mounted && currentStep >= totalSteps) {
           setProgress(100);
-          const finalTimeout = setTimeout(() => {
-            if (mountedRef.current) {
-              onComplete();
-            }
-          }, 500);
-          timeoutIds.push(finalTimeout);
+          setTimeout(() => {
+            if (mounted) onComplete();
+          }, 300);
         }
         return;
       }
 
-      // Update log and progress for current step
-      setLog(prev => [...prev, steps[currentStepIndex]]);
-      setProgress(((currentStepIndex + 1) / totalSteps) * 100);
-      setCurrentStep(currentStepIndex);
-
-      // Move to next step
-      currentStepIndex++;
-
+      // Add log for this step
+      setLogs(prev => [...prev, steps[currentStep]]);
+      
+      // Update progress
+      const newProgress = ((currentStep + 1) / totalSteps) * 100;
+      setProgress(newProgress);
+      
+      currentStep++;
+      
       // Schedule next step
-      const timeoutId = setTimeout(processNextStep, 150);
-      timeoutIds.push(timeoutId);
+      setTimeout(runStep, 150);
     };
 
-    // Start the boot sequence
-    processNextStep();
+    // Start the sequence
+    const timeoutId = setTimeout(runStep, 100);
 
-    // Cleanup function
     return () => {
-      mountedRef.current = false;
-      timeoutIds.forEach(id => clearTimeout(id));
+      mounted = false;
+      clearTimeout(timeoutId);
     };
   }, [onComplete]);
 
@@ -157,8 +147,12 @@ const BootLoader = ({ onComplete }) => {
     <div className="fixed inset-0 bg-black text-cyan-500 font-mono text-xs flex flex-col items-center justify-center z-[9999]">
       <div className="relative mb-8">
         <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-20 animate-pulse" />
-        <Hexagon size={96} className="relative z-10 animate-spin text-cyan-400" strokeWidth={0.5} />
-        <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-3xl tracking-tighter">QF</div>
+        <div className="relative z-10 text-center">
+          <div className="text-cyan-400 animate-spin mb-4">
+            <Hexagon size={96} strokeWidth={0.5} />
+          </div>
+          <div className="text-white font-bold text-3xl tracking-tighter">QF</div>
+        </div>
       </div>
       
       <div className="w-96 space-y-4">
@@ -173,11 +167,11 @@ const BootLoader = ({ onComplete }) => {
           />
         </div>
         <div className="h-24 font-mono text-[10px] text-slate-500 flex flex-col-reverse overflow-hidden border-l border-slate-800 pl-3">
-          {log.map((l, i) => (
-            <div key={i} className="animate-in slide-in-from-left-2 fade-in">
-              <span className="text-cyan-600">OK</span> {l}...
+          {logs.slice().reverse().map((log, i) => (
+            <div key={i}>
+              <span className="text-cyan-600">OK</span> {log}...
             </div>
-          )).reverse()}
+          ))}
         </div>
       </div>
     </div>
