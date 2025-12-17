@@ -113,36 +113,38 @@ const BootLoader = ({ onComplete }) => {
     
     const totalSteps = steps.length;
     let timeoutIds = [];
+    let currentStepIndex = 0;
 
-    const processStep = (stepIndex) => {
-      if (!mountedRef.current || stepIndex >= totalSteps) {
-        if (mountedRef.current && stepIndex >= totalSteps) {
-          // All steps complete
+    const processNextStep = () => {
+      if (!mountedRef.current || currentStepIndex >= totalSteps) {
+        // Completion logic
+        if (mountedRef.current && currentStepIndex >= totalSteps) {
           setProgress(100);
-          setTimeout(() => {
+          const finalTimeout = setTimeout(() => {
             if (mountedRef.current) {
               onComplete();
             }
           }, 500);
+          timeoutIds.push(finalTimeout);
         }
         return;
       }
 
-      // Update log and progress
-      setLog(prev => [...prev, steps[stepIndex]]);
-      setProgress(((stepIndex + 1) / totalSteps) * 100);
-      setCurrentStep(stepIndex);
+      // Update log and progress for current step
+      setLog(prev => [...prev, steps[currentStepIndex]]);
+      setProgress(((currentStepIndex + 1) / totalSteps) * 100);
+      setCurrentStep(currentStepIndex);
+
+      // Move to next step
+      currentStepIndex++;
 
       // Schedule next step
-      const timeoutId = setTimeout(() => {
-        processStep(stepIndex + 1);
-      }, 150); // 150ms between steps
-
+      const timeoutId = setTimeout(processNextStep, 150);
       timeoutIds.push(timeoutId);
     };
 
     // Start the boot sequence
-    processStep(0);
+    processNextStep();
 
     // Cleanup function
     return () => {
