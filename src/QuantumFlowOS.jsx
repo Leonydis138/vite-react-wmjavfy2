@@ -9,314 +9,393 @@ import React, {
 import {
   Terminal,
   Activity,
-  Cpu,
-  Server,
   Shield,
-  Zap,
-  Database,
-  Lock,
-  Box,
-  Layers,
-  Globe,
   Wifi,
-  HardDrive,
-  Code,
-  FileText,
-  Share2,
-  GitBranch,
-  Radio,
-  Grid,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
-  Play,
-  Pause,
-  RefreshCw,
-  Hash,
-  Eye
+  Box,
+  Lock,
+  X
 } from 'lucide-react'
 
-export default function QuantumFlowOS() {
-  const [booted, setBooted] = useState(false)
-  const [locked, setLocked] = useState(true)
-  const [windows, setWindows] = useState([])
-  const [activeWindow, setActiveWindow] = useState(null)
-  const [time, setTime] = useState(new Date())
-  const [commandLog, setCommandLog] = useState([])
-  const [fs, setFs] = useState(() => {
-    const saved = localStorage.getItem('qfos_fs')
-    return saved ? JSON.parse(saved) : {
-      '/': {
+/* -----------------------------
+   THEMES
+----------------------------- */
+const THEMES = {
+  CYAN: { id: 'CYAN', bg: 'rgba(0,20,30,0.12)' },
+  EMERALD: { id: 'EMERALD', bg: 'rgba(0,30,20,0.12)' },
+  AMBER: { id: 'AMBER', bg: 'rgba(30,20,0,0.12)' }
+}
+
+/* -----------------------------
+   FILESYSTEM
+----------------------------- */
+const DEFAULT_FS = {
+  '/': {
+    type: 'dir',
+    children: {
+      home: {
         type: 'dir',
         children: {
-          home: { type: 'dir', children: {} },
-          system: { type: 'dir', children: {} }
+          readme: {
+            type: 'file',
+            content: 'Welcome to QuantumFlow OS'
+          }
         }
       }
     }
+  }
+}
+
+/* -----------------------------
+   WALLPAPER ENGINE
+----------------------------- */
+function Wallpaper({ theme }) {
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    let raf
+
+    const resize = () => {
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+    }
+
+    window.addEventListener('resize', resize)
+    resize()
+
+    const draw = () => {
+      ctx.fillStyle = theme.bg
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      raf = requestAnimationFrame(draw)
+    }
+
+    draw()
+    return () => {
+      window.removeEventListener('resize', resize)
+      cancelAnimationFrame(raf)
+    }
+  }, [theme])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 -z-10 pointer-events-none"
+    />
+  )
+}
+
+/* -----------------------------
+   PLUGIN APPS
+----------------------------- */
+const PLUGINS = {
+  terminal: {
+    id: 'terminal',
+    name: 'Terminal',
+    icon: Terminal,
+    permissions: ['fs', 'system'],
+    render: TerminalApp
+  },
+  monitor: {
+    id: 'monitor',
+    name: 'Process Monitor',
+    icon: Activity,
+    permissions: ['system'],
+    render: ProcessMonitorApp
+  },
+  network: {
+    id: 'network',
+    name: 'Network',
+    icon: Wifi,
+    permissions: ['network'],
+    render: () => <div>Network stack idle</div>
+  },
+  security: {
+    id: 'security',
+    name: 'Security',
+    icon: Shield,
+    permissions: ['system'],
+    render: () => <div>Security status: OK</div>
+  }
+}
+
+/* =====================================================
+   MAIN OS
+===================================================== */
+export default function QuantumFlowOS() {
+  const [locked, setLocked] = useState(true)
+  const [windows, setWindows] = useState(() => {
+    const saved = localStorage.getItem('qfos_windows')
+    return saved ? JSON.parse(saved) : []
+  })
+  const [activeWindow, setActiveWindow] = useState(null)
+  const [time, setTime] = useState(new Date())
+
+  const [themeId, setThemeId] = useState(
+    localStorage.getItem('qfos_theme') || 'CYAN'
+  )
+  const theme = THEMES[themeId]
+
+  const [fs, setFs] = useState(() => {
+    const saved = localStorage.getItem('qfos_fs')
+    return saved ? JSON.parse(saved) : DEFAULT_FS
   })
 
+  /* -----------------------------
+     Persistence
+  ----------------------------- */
   useEffect(() => {
     localStorage.setItem('qfos_fs', JSON.stringify(fs))
   }, [fs])
+
+  useEffect(() => {
+    localStorage.setItem('qfos_windows', JSON.stringify(windows))
+  }, [windows])
+
+  useEffect(() => {
+    localStorage.setItem('qfos_theme', themeId)
+  }, [themeId])
 
   useEffect(() => {
     const i = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(i)
   }, [])
 
-  const openWindow = useCallback((app) => {
+  /* -----------------------------
+     Process Handling
+  ----------------------------- */
+  const openWindow = useCallback((plugin) => {
     setWindows(w => [
       ...w,
       {
-        id: Date.now() + Math.random(),
-        app,
-        x: 120 + w.length * 30,
+        pid: crypto.randomUUID(),
+        plugin: plugin.id,
+        title: plugin.name,
+        x: 100 + w.length * 30,
         y: 80 + w.length * 30,
         w: 420,
         h: 300,
-        z: w.length + 1
+        z: w.length + 1,
+        cpu: Math.random() * 10,
+        ram: Math.random() * 100
       }
     ])
   }, [])
 
-  const closeWindow = useCallback((id) => {
-    setWindows(w => w.filter(win => win.id !== id))
-    if (activeWindow === id) setActiveWindow(null)
-  }, [activeWindow])
-
-  const bringToFront = useCallback((id) => {
-    setWindows(w =>
-      w.map(win =>
-        win.id === id
-          ? { ...win, z: Math.max(...w.map(x => x.z)) + 1 }
-          : win
-      )
-    )
-    setActiveWindow(id)
-  }, [])
-
-  const apps = useMemo(() => ([
-    { id: 'terminal', name: 'Terminal', icon: Terminal },
-    { id: 'monitor', name: 'System Monitor', icon: Activity },
-    { id: 'files', name: 'Files', icon: FolderIcon },
-    { id: 'network', name: 'Network', icon: Wifi },
-    { id: 'security', name: 'Security', icon: Shield }
-  ]), [])
-
-  function FolderIcon() {
-    return <Box size={18} />
+  const closeWindow = (pid) => {
+    setWindows(w => w.filter(p => p.pid !== pid))
+    if (activeWindow === pid) setActiveWindow(null)
   }
 
-  const BootScreen = () => (
-    <div className="w-full h-full flex flex-col items-center justify-center text-green-400">
-      <div className="text-3xl mb-4">QuantumFlow OS</div>
-      <div className="animate-pulse">initializing subsystems…</div>
-    </div>
-  )
+  const bringToFront = (pid) => {
+    setWindows(w =>
+      w.map(p =>
+        p.pid === pid
+          ? { ...p, z: Math.max(...w.map(x => x.z)) + 1 }
+          : p
+      )
+    )
+    setActiveWindow(pid)
+  }
 
-  const LockScreen = () => (
-    <div className="w-full h-full flex flex-col items-center justify-center text-white">
-      <Lock size={48} className="mb-4" />
-      <button
-        onClick={() => setLocked(false)}
-        className="px-6 py-2 bg-blue-600 rounded"
-      >
-        Unlock
-      </button>
-    </div>
-  )
-
+  /* -----------------------------
+     TASKBAR
+  ----------------------------- */
   const Taskbar = () => (
-    <div className="absolute bottom-0 left-0 right-0 h-10 bg-zinc-900 flex items-center px-2 gap-2">
-      {apps.map(app => (
+    <div className="absolute bottom-0 left-0 right-0 h-10 bg-zinc-900 flex items-center gap-2 px-2">
+      {Object.values(PLUGINS).map(p => (
         <button
-          key={app.id}
-          onClick={() => openWindow(app)}
-          className="flex items-center gap-1 px-2 py-1 text-sm bg-zinc-800 rounded hover:bg-zinc-700"
+          key={p.id}
+          onClick={() => openWindow(p)}
+          className="flex items-center gap-1 px-2 py-1 bg-zinc-800 rounded text-xs"
         >
-          <app.icon size={14} />
-          {app.name}
+          <p.icon size={14} /> {p.name}
         </button>
       ))}
+      <select
+        value={themeId}
+        onChange={e => setThemeId(e.target.value)}
+        className="ml-2 bg-zinc-800 text-xs rounded"
+      >
+        {Object.keys(THEMES).map(t => (
+          <option key={t}>{t}</option>
+        ))}
+      </select>
       <div className="ml-auto text-xs text-zinc-300">
         {time.toLocaleTimeString()}
       </div>
     </div>
   )
 
-  const WindowFrame = ({ win }) => (
-    <div
-      className="absolute bg-zinc-900 border border-zinc-700 text-white"
-      style={{
-        left: win.x,
-        top: win.y,
-        width: win.w,
-        height: win.h,
-        zIndex: win.z
-      }}
-      onMouseDown={() => bringToFront(win.id)}
-    >
-      <div className="h-8 bg-zinc-800 flex items-center justify-between px-2">
-        <span className="text-xs">{win.app.name}</span>
-        <button onClick={() => closeWindow(win.id)}>✕</button>
-      </div>
-      <div className="p-2 text-sm overflow-auto h-[calc(100%-2rem)]">
-        {renderApp(win.app.id)}
-      </div>
-    </div>
-  )
+  /* -----------------------------
+     WINDOW FRAME
+  ----------------------------- */
+  const WindowFrame = ({ win }) => {
+    const drag = useRef(null)
+    const Plugin = PLUGINS[win.plugin]
 
-
-  // ---------------------------
-  // Terminal App
-  // ---------------------------
-  const TerminalApp = () => {
-    const [input, setInput] = useState('')
-    const [history, setHistory] = useState(['QuantumFlow v19.0 Zenith', 'Type "help" for commands.'])
-    const [cwd, setCwd] = useState(['home', 'admin'])
-    const endRef = useRef(null)
-
-    useEffect(() => endRef.current?.scrollIntoView(), [history])
-
-    const parsePath = (pathStr) => {
-      if (!pathStr) return cwd
-      if (pathStr.startsWith('/')) return pathStr.slice(1).split('/')
-      return [...cwd, ...pathStr.split('/')]
-    }
-
-    const getNode = (pathArr) => {
-      let ptr = fs
-      for (const p of pathArr) ptr = ptr?.[p]
-      return ptr
-    }
-
-    const handleCommand = (e) => {
-      if (e.key !== 'Enter') return
-      const cmdLine = input.trim()
-      setHistory(h => [...h, `${cwd.join('/')} $ ${cmdLine}`])
-      setInput('')
-      if (!cmdLine) return
-
-      const [cmd, ...args] = cmdLine.split(' ')
-
-      if (cmd === 'clear') setHistory([])
-      else if (cmd === 'help') setHistory(h => [...h, 'Commands: ls, cd, cat, mkdir, touch, open, clear'])
-      else if (cmd === 'ls') {
-        const node = getNode(parsePath(args[0]))
-        setHistory(h => [...h, node ? Object.keys(node).join('  ') : 'Path not found'])
+    const onMouseDown = (e) => {
+      bringToFront(win.pid)
+      drag.current = {
+        x: e.clientX - win.x,
+        y: e.clientY - win.y
       }
-      else if (cmd === 'cat') {
-        const node = getNode(parsePath(args[0]))
-        setHistory(h => [...h, node?.content || 'File not found'])
-      }
-      else setHistory(h => [...h, `Unknown command: ${cmd}`])
     }
+
+    useEffect(() => {
+      const move = (e) => {
+        if (!drag.current) return
+        setWindows(w =>
+          w.map(p =>
+            p.pid === win.pid
+              ? {
+                  ...p,
+                  x: e.clientX - drag.current.x,
+                  y: e.clientY - drag.current.y
+                }
+              : p
+          )
+        )
+      }
+      const up = () => (drag.current = null)
+      window.addEventListener('mousemove', move)
+      window.addEventListener('mouseup', up)
+      return () => {
+        window.removeEventListener('mousemove', move)
+        window.removeEventListener('mouseup', up)
+      }
+    }, [win.pid])
 
     return (
-      <div className="h-full bg-black text-green-400 font-mono p-2 overflow-auto">
-        {history.map((line,i) => <div key={i}>{line}</div>)}
-        <div className="flex gap-1">
-          <span>{cwd.join('/')} $</span>
-          <input
-            autoFocus
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleCommand}
-            className="bg-transparent border-none outline-none flex-1 text-green-400"
+      <div
+        className="absolute bg-zinc-900 border border-zinc-700 text-white"
+        style={{
+          left: win.x,
+          top: win.y,
+          width: win.w,
+          height: win.h,
+          zIndex: win.z
+        }}
+      >
+        <div
+          className="h-8 bg-zinc-800 flex items-center justify-between px-2 cursor-move"
+          onMouseDown={onMouseDown}
+        >
+          <span className="text-xs">{win.title}</span>
+          <button onClick={() => closeWindow(win.pid)}>
+            <X size={12} />
+          </button>
+        </div>
+        <div className="p-2 text-sm overflow-auto h-[calc(100%-2rem)]">
+          <Plugin.render
+            fs={fs}
+            setFs={setFs}
+            permissions={Plugin.permissions}
+            processes={windows}
+            kill={closeWindow}
           />
         </div>
-        <div ref={endRef} />
       </div>
     )
   }
 
-  // ---------------------------
-  // Render app content by type
-  // ---------------------------
-  const renderApp = (id) => {
-    switch(id) {
-      case 'terminal': return <TerminalApp />
-      case 'monitor': return <div>CPU: 12% | RAM: 45%</div>
-      case 'files': return <div>File Explorer - Coming Soon</div>
-      case 'network': return <div>Network Monitor - Coming Soon</div>
-      case 'security': return <div>Security Center - Coming Soon</div>
-      default: return <div>Unknown App</div>
-    }
+  /* -----------------------------
+     LOCK SCREEN
+  ----------------------------- */
+  if (locked) {
+    return (
+      <div className="w-screen h-screen bg-zinc-900 flex items-center justify-center">
+        <button
+          onClick={() => setLocked(false)}
+          className="px-6 py-3 bg-blue-600 rounded"
+        >
+          Unlock QuantumFlow
+        </button>
+      </div>
+    )
   }
 
-  // ---------------------------
-  // Main render
-  // ---------------------------
   return (
-    <div className="w-screen h-screen bg-zinc-900 relative text-white overflow-hidden">
-      {locked && <LockScreen />}
-      {!locked && (
-        <>
-          {windows.map(win => <WindowFrame key={win.id} win={win} />)}
-          <Taskbar />
-        </>
-      )}
+    <div className="w-screen h-screen bg-zinc-900 relative overflow-hidden">
+      <Wallpaper theme={theme} />
+      {windows.map(w => (
+        <WindowFrame key={w.pid} win={w} />
+      ))}
+      <Taskbar />
     </div>
   )
 }
 
+/* =====================================================
+   APPS
+===================================================== */
 
-  // ---------------------------
-  // Wallpaper Engine
-  // ---------------------------
-  const Wallpaper = ({theme}) => {
-    const canvasRef = useRef(null)
-    useEffect(() => {
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const ctx = canvas.getContext('2d')
-      let animId
-      const resize = () => {
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
-      }
-      window.addEventListener('resize', resize)
-      resize()
+function TerminalApp({ fs, setFs, permissions }) {
+  const [history, setHistory] = useState([
+    'QuantumFlow Terminal',
+    'Type "help"'
+  ])
+  const [input, setInput] = useState('')
+  const [cwd, setCwd] = useState(['/','home'])
 
-      const draw = () => {
-        ctx.fillStyle = theme.id === 'EMERALD' ? 'rgba(0,10,0,0.1)' : 'rgba(0,0,0,0.1)'
-        ctx.fillRect(0,0,canvas.width,canvas.height)
-        animId = requestAnimationFrame(draw)
-      }
-      draw()
-      return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animId) }
-    }, [theme])
-    return <canvas ref={canvasRef} className="absolute inset-0 -z-10 pointer-events-none" />
+  const resolve = (p) =>
+    p?.startsWith('/') ? p.split('/').filter(Boolean) : [...cwd, p]
+
+  const getNode = (path) => {
+    let n = fs['/']
+    for (const p of path.slice(1)) n = n?.children?.[p]
+    return n
   }
 
-  // ---------------------------
-  // Persistent theme/state
-  // ---------------------------
-  const [fs, setFs] = usePersistentState('qf_fs', DEFAULT_FS)
-  const [themeId, setThemeId] = usePersistentState('qf_theme','CYAN')
-  const theme = THEMES[themeId]
+  const run = (cmd) => {
+    if (!permissions.includes('fs'))
+      return setHistory(h => [...h, 'Permission denied'])
 
-  // ---------------------------
-  // Windows
-  // ---------------------------
-  const [windows, setWindows] = useState([])
-  const [activeWindow, setActiveWindow] = useState(null)
+    if (cmd === 'ls') {
+      const n = getNode(cwd)
+      setHistory(h => [...h, Object.keys(n.children).join(' ')])
+    }
+    if (cmd.startsWith('cd')) {
+      const p = resolve(cmd.split(' ')[1])
+      if (getNode(p)) setCwd(p)
+      else setHistory(h => [...h, 'Path not found'])
+    }
+  }
 
-  // ---------------------------
-  // Locked
-  // ---------------------------
-  const [locked, setLocked] = useState(true)
+  return (
+    <div className="font-mono text-green-400 text-xs">
+      {history.map((l,i) => <div key={i}>{l}</div>)}
+      <input
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            run(input)
+            setInput('')
+          }
+        }}
+        className="bg-transparent outline-none w-full"
+      />
+    </div>
+  )
+}
 
-  // ---------------------------
-  // System clock
-  // ---------------------------
-  const [time, setTime] = useState(new Date())
-  useEffect(() => {
-    const t = setInterval(()=>setTime(new Date()),1000)
-    return ()=>clearInterval(t)
-  }, [])
-
-  // ---------------------------
-  // Export default
-  // ---------------------------
+function ProcessMonitorApp({ processes, kill }) {
+  return (
+    <div className="text-xs space-y-1">
+      {processes.map(p => (
+        <div key={p.pid} className="flex justify-between">
+          <span>{p.title}</span>
+          <span>CPU {p.cpu.toFixed(1)}%</span>
+          <span>RAM {p.ram.toFixed(0)}MB</span>
+          <button
+            className="text-red-400"
+            onClick={() => kill(p.pid)}
+          >
+            KILL
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
