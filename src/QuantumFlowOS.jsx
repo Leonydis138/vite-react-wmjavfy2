@@ -925,3 +925,5 @@ const QuantumFlowOS = () => {
     </div>
   );
 };
+
+export default QuantumFlowOS;
