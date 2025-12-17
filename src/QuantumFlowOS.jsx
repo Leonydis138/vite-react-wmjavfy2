@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { 
   Terminal, Activity, Cpu, Server, Shield, Zap, Database, Lock, 
   Box, Layers, Globe, Wifi, HardDrive, Code, FileText, 
@@ -1306,7 +1307,9 @@ const maximizeApp = (id) => {
   </div>
 </div>
 
-</div>
+      {/* VERCEL WEB ANALYTICS */}
+      <Analytics />
+    </div>
   );
 };
 
