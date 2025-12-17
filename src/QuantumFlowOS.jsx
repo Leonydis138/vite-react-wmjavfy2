@@ -76,64 +76,92 @@ const DEFAULT_FS = {
   }
 };
 
+import React, { useState, useEffect, useRef } from 'react';
+import { Hexagon } from 'lucide-react';
+
+// Fixed BootLoader component
 const BootLoader = ({ onComplete }) => {
   const [log, setLog] = useState([]);
   const [progress, setProgress] = useState(0);
+  const intervalRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
+    // Clear any existing intervals/timeouts
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
     const steps = [
-        "Loading core configuration",
-        "Initializing security systems",
-        "Starting cache engine",
-        "Loading AI models",
-        "Initializing blockchain",
-        "Connecting to cloud providers",
-        "Starting IoT platform",
-        "Loading analytics datasets",
-        "Initializing quantum simulator",
-        "Starting monitoring daemon",
-        "Launching API gateway",
-        "Loading automation workflows",
-        "Preparing deployment systems",
-        "Starting backup scheduler",
-        "Finalizing initialization"
+      "Loading core configuration",
+      "Initializing security systems",
+      "Starting cache engine",
+      "Loading AI models",
+      "Initializing blockchain",
+      "Connecting to cloud providers",
+      "Starting IoT platform",
+      "Loading analytics datasets",
+      "Initializing quantum simulator",
+      "Starting monitoring daemon",
+      "Launching API gateway",
+      "Loading automation workflows",
+      "Preparing deployment systems",
+      "Starting backup scheduler",
+      "Finalizing initialization"
     ];
     
     let step = 0;
-    const interval = setInterval(() => {
+    
+    intervalRef.current = setInterval(() => {
       if (step >= steps.length) {
-        clearInterval(interval);
-        setTimeout(onComplete, 800);
+        clearInterval(intervalRef.current);
+        setProgress(100);
+        
+        // Call onComplete after a short delay
+        timeoutRef.current = setTimeout(() => {
+          onComplete();
+        }, 800);
         return;
       }
+      
       setLog(prev => [...prev, steps[step]]);
       setProgress(((step + 1) / steps.length) * 100);
       step++;
-    }, 150);
+    }, 100); // Reduced interval for faster boot
 
-    return () => clearInterval(interval);
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, [onComplete]);
 
   return (
     <div className="fixed inset-0 bg-black text-cyan-500 font-mono text-xs flex flex-col items-center justify-center z-[9999]">
-       <div className="relative mb-8">
-         <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-20 animate-pulse" />
-         <Hexagon size={96} className="relative z-10 animate-spin text-cyan-400" strokeWidth={0.5} />
-         <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-3xl tracking-tighter">QF</div>
-       </div>
-       
-       <div className="w-96 space-y-4">
-          <div className="flex justify-between text-[10px] uppercase text-slate-500">
-             <span>KERNEL_INIT_SEQUENCE</span>
-             <span>{Math.round(progress)}%</span>
-          </div>
-          <div className="h-0.5 bg-slate-900 overflow-hidden relative">
-             <div className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_20px_currentColor]" style={{ width: `${progress}%` }} />
-          </div>
-          <div className="h-24 font-mono text-[10px] text-slate-500 flex flex-col-reverse overflow-hidden border-l border-slate-800 pl-3">
-             {log.map((l, i) => <div key={i} className="animate-in slide-in-from-left-2 fade-in"><span className="text-cyan-600">OK</span> {l}...</div>).reverse()}
-          </div>
-       </div>
+      <div className="relative mb-8">
+        <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-20 animate-pulse" />
+        <Hexagon size={96} className="relative z-10 animate-spin text-cyan-400" strokeWidth={0.5} />
+        <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-3xl tracking-tighter">QF</div>
+      </div>
+      
+      <div className="w-96 space-y-4">
+        <div className="flex justify-between text-[10px] uppercase text-slate-500">
+          <span>KERNEL_INIT_SEQUENCE</span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+        <div className="h-0.5 bg-slate-900 overflow-hidden relative">
+          <div 
+            className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_20px_currentColor]" 
+            style={{ width: `${progress}%` }} 
+          />
+        </div>
+        <div className="h-24 font-mono text-[10px] text-slate-500 flex flex-col-reverse overflow-hidden border-l border-slate-800 pl-3">
+          {log.map((l, i) => (
+            <div key={i} className="animate-in slide-in-from-left-2 fade-in">
+              <span className="text-cyan-600">OK</span> {l}...
+            </div>
+          )).reverse()}
+        </div>
+      </div>
     </div>
   );
 };
