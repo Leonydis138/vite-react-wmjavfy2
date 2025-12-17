@@ -84,67 +84,50 @@ const DEFAULT_FS = {
 // FIXED BOOTLOADER
 // ============================================================================
 
-const BootLoader = ({ onComplete }) => {
-  const [log, setLog] = useState([]);
+const SimpleBootLoader = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
-  const intervalRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const [message, setMessage] = useState("Initializing QuantumFlow Kernel...");
 
   useEffect(() => {
-    // Clear any existing intervals/timeouts
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    const steps = [
-      "Loading core configuration",
-      "Initializing security systems",
-      "Starting cache engine",
-      "Loading AI models",
-      "Initializing blockchain",
-      "Connecting to cloud providers",
-      "Starting IoT platform",
-      "Loading analytics datasets",
-      "Initializing quantum simulator",
-      "Starting monitoring daemon",
-      "Launching API gateway",
-      "Loading automation workflows",
-      "Preparing deployment systems",
-      "Starting backup scheduler",
-      "Finalizing initialization"
+    const messages = [
+      "Loading core configuration...",
+      "Initializing security systems...",
+      "Starting cache engine...",
+      "Loading AI models...",
+      "Initializing blockchain...",
+      "Connecting to cloud providers...",
+      "Starting IoT platform...",
+      "Loading analytics datasets...",
+      "Initializing quantum simulator...",
+      "Starting monitoring daemon...",
+      "Launching API gateway...",
+      "Loading automation workflows...",
+      "Preparing deployment systems...",
+      "Starting backup scheduler...",
+      "QuantumFlow OS Ready..."
     ];
-    
-    let step = 0;
-    
-    intervalRef.current = setInterval(() => {
-      if (step >= steps.length) {
-        clearInterval(intervalRef.current);
-        setProgress(100);
-        
-        // Call onComplete after a short delay
-        timeoutRef.current = setTimeout(() => {
-          onComplete();
-        }, 800);
-        return;
-      }
-      
-      setLog(prev => [...prev, steps[step]]);
-      setProgress(((step + 1) / steps.length) * 100);
-      step++;
-    }, 100); // Reduced interval for faster boot
 
-    // Cleanup function
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
+    let currentStep = 0;
+    const totalSteps = messages.length;
+    
+    const interval = setInterval(() => {
+      if (currentStep < totalSteps) {
+        setMessage(messages[currentStep]);
+        setProgress(((currentStep + 1) / totalSteps) * 100);
+        currentStep++;
+      } else {
+        clearInterval(interval);
+        setTimeout(onComplete, 500);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 bg-black text-cyan-500 font-mono text-xs flex flex-col items-center justify-center z-[9999]">
+    <div className="fixed inset-0 bg-black text-cyan-500 font-mono text-sm flex flex-col items-center justify-center z-[9999]">
       <div className="relative mb-8">
-        <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-20 animate-pulse" />
-        {/* Hexagon icon without importing it again */}
-        <div className="relative z-10 animate-spin text-cyan-400" style={{ width: 96, height: 96 }}>
+        <div className="animate-spin text-cyan-400" style={{ width: 96, height: 96 }}>
           <svg 
             viewBox="0 0 24 24" 
             fill="none" 
@@ -159,27 +142,26 @@ const BootLoader = ({ onComplete }) => {
       </div>
       
       <div className="w-96 space-y-4">
-        <div className="flex justify-between text-[10px] uppercase text-slate-500">
-          <span>KERNEL_INIT_SEQUENCE</span>
+        <div className="flex justify-between text-xs uppercase text-slate-400">
+          <span>BOOT SEQUENCE</span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <div className="h-0.5 bg-slate-900 overflow-hidden relative">
+        <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_20px_currentColor]" 
-            style={{ width: `${progress}%` }} 
+            className="h-full bg-cyan-500 transition-all duration-300"
+            style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="h-24 font-mono text-[10px] text-slate-500 flex flex-col-reverse overflow-hidden border-l border-slate-800 pl-3">
-          {log.map((l, i) => (
-            <div key={i} className="animate-in slide-in-from-left-2 fade-in">
-              <span className="text-cyan-600">OK</span> {l}...
-            </div>
-          )).reverse()}
+        <div className="text-center text-cyan-300 h-6 flex items-center justify-center">
+          {message}
+        </div>
+        <div className="text-xs text-slate-500 text-center mt-8">
+          QuantumFlow OS v19.1 Zenith
         </div>
       </div>
     </div>
   );
-};
+};          
 
 // ============================================================================
 // LIVE WALLPAPER ENGINE
