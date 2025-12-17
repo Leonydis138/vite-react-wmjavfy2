@@ -83,6 +83,109 @@ const DEFAULT_FS = {
 // ============================================================================
 // RELIABLE BOOTLOADER - GUARANTEED TO WORK
 // ============================================================================
+
+const BootLoader = ({ onComplete }) => {
+  const [log, setLog] = useState([]);
+  const [progress, setProgress] = useState(0);
+  const mountedRef = useRef(false);
+  const stepsCompleted = useRef(0);
+
+  const steps = [
+    "Loading core configuration",
+    "Initializing security systems",
+    "Starting cache engine",
+    "Loading AI models",
+    "Initializing blockchain",
+    "Connecting to cloud providers",
+    "Starting IoT platform",
+    "Loading analytics datasets",
+    "Initializing quantum simulator",
+    "Starting monitoring daemon",
+    "Launching API gateway",
+    "Loading automation workflows",
+    "Preparing deployment systems",
+    "Starting backup scheduler",
+    "Finalizing initialization"
+  ];
+
+  useEffect(() => {
+    // Prevent double mounting in development
+    if (mountedRef.current) return;
+    mountedRef.current = true;
+    
+    console.log("BootLoader: Starting boot sequence");
+    const totalSteps = steps.length;
+    const timeoutIds = [];
+    
+    const runBootSequence = () => {
+      stepsCompleted.current = 0;
+      
+      const processStep = () => {
+        if (stepsCompleted.current >= totalSteps) {
+          // Final completion
+          setProgress(100);
+          setTimeout(() => {
+            console.log("BootLoader: Complete, calling onComplete");
+            onComplete();
+          }, 300);
+          return;
+        }
+        
+        const step = steps[stepsCompleted.current];
+        setLog(prev => [step, ...prev]);
+        setProgress(((stepsCompleted.current + 1) / totalSteps) * 100);
+        
+        stepsCompleted.current++;
+        
+        // Schedule next step
+        const timeoutId = setTimeout(processStep, 150);
+        timeoutIds.push(timeoutId);
+      };
+      
+      // Start first step
+      const initialTimeout = setTimeout(processStep, 100);
+      timeoutIds.push(initialTimeout);
+    };
+    
+    runBootSequence();
+    
+    return () => {
+      console.log("BootLoader: Cleanup");
+      timeoutIds.forEach(id => clearTimeout(id));
+    };
+  }, [onComplete]);
+
+  return (
+    <div className="fixed inset-0 bg-black text-cyan-500 font-mono text-xs flex flex-col items-center justify-center z-[9999]">
+      <div className="relative mb-8">
+        <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-20 animate-pulse" />
+        <Hexagon size={96} className="relative z-10 animate-spin text-cyan-400" strokeWidth={0.5} />
+        <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-3xl tracking-tighter">QF</div>
+      </div>
+      
+      <div className="w-96 space-y-4">
+        <div className="flex justify-between text-[10px] uppercase text-slate-500">
+          <span>KERNEL_INIT_SEQUENCE</span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+        <div className="h-0.5 bg-slate-900 overflow-hidden relative">
+          <div 
+            className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_20px_currentColor]" 
+            style={{ width: `${progress}%` }} 
+          />
+        </div>
+        <div className="h-24 font-mono text-[10px] text-slate-500 flex flex-col-reverse overflow-hidden border-l border-slate-800 pl-3">
+          {log.slice(0, 10).map((l, i) => (
+            <div key={i}>
+              <span className="text-cyan-600">OK</span> {l}...
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ============================================================================
 // LIVE WALLPAPER ENGINE
 // ============================================================================
