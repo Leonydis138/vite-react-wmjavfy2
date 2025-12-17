@@ -81,14 +81,13 @@ const DEFAULT_FS = {
 };
 
 // ============================================================================
-// RELIABLE BOOTLOADER - GUARANTEED TO WORK
+// RELIABLE BOOTLOADER - SIMPLE AND WORKING
 // ============================================================================
 
 const BootLoader = ({ onComplete }) => {
   const [log, setLog] = useState([]);
   const [progress, setProgress] = useState(0);
-  const mountedRef = useRef(false);
-  const stepsCompleted = useRef(0);
+  const [isComplete, setIsComplete] = useState(false);
 
   const steps = [
     "Loading core configuration",
@@ -108,58 +107,78 @@ const BootLoader = ({ onComplete }) => {
     "Finalizing initialization"
   ];
 
+  // Use useRef for mutable values that don't trigger re-renders
+  const stepsCompleted = useRef(0);
+  const timeoutRefs = useRef([]);
+
   useEffect(() => {
-    // Prevent double mounting in development
-    if (mountedRef.current) return;
-    mountedRef.current = true;
+    // Safety check - if already complete, don't start again
+    if (isComplete) return;
     
-    console.log("BootLoader: Starting boot sequence");
+    console.log("BootLoader: Starting...");
+    
     const totalSteps = steps.length;
-    const timeoutIds = [];
     
-    const runBootSequence = () => {
-      stepsCompleted.current = 0;
+    const runNextStep = () => {
+      // Check if all steps are done
+      if (stepsCompleted.current >= totalSteps) {
+        console.log("BootLoader: All steps completed");
+        setProgress(100);
+        
+        // Give a small delay before calling onComplete
+        const finalTimeout = setTimeout(() => {
+          console.log("BootLoader: Calling onComplete");
+          setIsComplete(true);
+          onComplete();
+        }, 500);
+        
+        timeoutRefs.current.push(finalTimeout);
+        return;
+      }
       
-      const processStep = () => {
-        if (stepsCompleted.current >= totalSteps) {
-          // Final completion
-          setProgress(100);
-          setTimeout(() => {
-            console.log("BootLoader: Complete, calling onComplete");
-            onComplete();
-          }, 300);
-          return;
-        }
-        
-        const step = steps[stepsCompleted.current];
-        setLog(prev => [step, ...prev]);
-        setProgress(((stepsCompleted.current + 1) / totalSteps) * 100);
-        
-        stepsCompleted.current++;
-        
-        // Schedule next step
-        const timeoutId = setTimeout(processStep, 150);
-        timeoutIds.push(timeoutId);
-      };
+      // Get current step
+      const currentStepIndex = stepsCompleted.current;
+      const stepText = steps[currentStepIndex];
       
-      // Start first step
-      const initialTimeout = setTimeout(processStep, 100);
-      timeoutIds.push(initialTimeout);
+      console.log(`BootLoader: Step ${currentStepIndex + 1}/${totalSteps}: ${stepText}`);
+      
+      // Update log
+      setLog(prev => {
+        const newLog = [stepText, ...prev];
+        // Keep only last 10 entries
+        return newLog.slice(0, 10);
+      });
+      
+      // Update progress
+      const newProgress = ((currentStepIndex + 1) / totalSteps) * 100;
+      setProgress(newProgress);
+      
+      // Increment for next step
+      stepsCompleted.current += 1;
+      
+      // Schedule next step
+      const timeoutId = setTimeout(runNextStep, 200); // 200ms between steps
+      timeoutRefs.current.push(timeoutId);
     };
     
-    runBootSequence();
+    // Start the sequence with a small delay
+    const initialTimeout = setTimeout(runNextStep, 100);
+    timeoutRefs.current.push(initialTimeout);
     
+    // Cleanup function
     return () => {
-      console.log("BootLoader: Cleanup");
-      timeoutIds.forEach(id => clearTimeout(id));
+      console.log("BootLoader: Cleanup - clearing timeouts");
+      timeoutRefs.current.forEach(id => clearTimeout(id));
     };
-  }, [onComplete]);
+  }, [onComplete, isComplete]);
 
   return (
     <div className="fixed inset-0 bg-black text-cyan-500 font-mono text-xs flex flex-col items-center justify-center z-[9999]">
       <div className="relative mb-8">
         <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-20 animate-pulse" />
-        <Hexagon size={96} className="relative z-10 animate-spin text-cyan-400" strokeWidth={0.5} />
+        <div className="relative z-10">
+          <Hexagon size={96} className="animate-spin text-cyan-400" strokeWidth={0.5} />
+        </div>
         <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-3xl tracking-tighter">QF</div>
       </div>
       
@@ -168,18 +187,26 @@ const BootLoader = ({ onComplete }) => {
           <span>KERNEL_INIT_SEQUENCE</span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <div className="h-0.5 bg-slate-900 overflow-hidden relative">
+        <div className="h-0.5 bg-slate-900 overflow-hidden relative rounded-full">
           <div 
-            className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_20px_currentColor]" 
+            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300 ease-out shadow-[0_0_20px_#0ea5e9]" 
             style={{ width: `${progress}%` }} 
           />
         </div>
-        <div className="h-24 font-mono text-[10px] text-slate-500 flex flex-col-reverse overflow-hidden border-l border-slate-800 pl-3">
-          {log.slice(0, 10).map((l, i) => (
-            <div key={i}>
-              <span className="text-cyan-600">OK</span> {l}...
-            </div>
-          ))}
+        <div className="h-24 font-mono text-[10px] text-slate-500 overflow-y-auto border border-slate-800 rounded p-2 bg-black/50">
+          {log.length === 0 ? (
+            <div className="text-slate-600">Starting boot sequence...</div>
+          ) : (
+            log.map((l, i) => (
+              <div key={i} className="py-0.5">
+                <span className="text-cyan-500 mr-2">▶</span>
+                <span>{l}...</span>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="text-[10px] text-slate-700 text-center">
+          QuantumFlow OS {SYSTEM_VERSION}
         </div>
       </div>
     </div>
