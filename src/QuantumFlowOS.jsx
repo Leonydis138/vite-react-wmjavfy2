@@ -1305,7 +1305,8 @@ const maximizeApp = (id) => {
     </div>
   </div>
 </div>
-      
+
+</div>
   );
 };
 
