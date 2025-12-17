@@ -81,87 +81,106 @@ const DEFAULT_FS = {
 };
 
 // ============================================================================
-// FIXED BOOTLOADER
+// RELIABLE BOOTLOADER - GUARANTEED TO WORK
 // ============================================================================
 
-const SimpleBootLoader = ({ onComplete }) => {
+const BootLoader = ({ onComplete }) => {
+  const [log, setLog] = useState([]);
   const [progress, setProgress] = useState(0);
-  const [message, setMessage] = useState("Initializing QuantumFlow Kernel...");
+  const [currentStep, setCurrentStep] = useState(0);
+  const mountedRef = useRef(true);
+
+  const steps = [
+    "Loading core configuration",
+    "Initializing security systems",
+    "Starting cache engine",
+    "Loading AI models",
+    "Initializing blockchain",
+    "Connecting to cloud providers",
+    "Starting IoT platform",
+    "Loading analytics datasets",
+    "Initializing quantum simulator",
+    "Starting monitoring daemon",
+    "Launching API gateway",
+    "Loading automation workflows",
+    "Preparing deployment systems",
+    "Starting backup scheduler",
+    "Finalizing initialization"
+  ];
 
   useEffect(() => {
-    const messages = [
-      "Loading core configuration...",
-      "Initializing security systems...",
-      "Starting cache engine...",
-      "Loading AI models...",
-      "Initializing blockchain...",
-      "Connecting to cloud providers...",
-      "Starting IoT platform...",
-      "Loading analytics datasets...",
-      "Initializing quantum simulator...",
-      "Starting monitoring daemon...",
-      "Launching API gateway...",
-      "Loading automation workflows...",
-      "Preparing deployment systems...",
-      "Starting backup scheduler...",
-      "QuantumFlow OS Ready..."
-    ];
-
-    let currentStep = 0;
-    const totalSteps = messages.length;
+    mountedRef.current = true;
     
-    const interval = setInterval(() => {
-      if (currentStep < totalSteps) {
-        setMessage(messages[currentStep]);
-        setProgress(((currentStep + 1) / totalSteps) * 100);
-        currentStep++;
-      } else {
-        clearInterval(interval);
-        setTimeout(onComplete, 500);
-      }
-    }, 200);
+    const totalSteps = steps.length;
+    let timeoutIds = [];
 
-    return () => clearInterval(interval);
+    const processStep = (stepIndex) => {
+      if (!mountedRef.current || stepIndex >= totalSteps) {
+        if (mountedRef.current && stepIndex >= totalSteps) {
+          // All steps complete
+          setProgress(100);
+          setTimeout(() => {
+            if (mountedRef.current) {
+              onComplete();
+            }
+          }, 500);
+        }
+        return;
+      }
+
+      // Update log and progress
+      setLog(prev => [...prev, steps[stepIndex]]);
+      setProgress(((stepIndex + 1) / totalSteps) * 100);
+      setCurrentStep(stepIndex);
+
+      // Schedule next step
+      const timeoutId = setTimeout(() => {
+        processStep(stepIndex + 1);
+      }, 150); // 150ms between steps
+
+      timeoutIds.push(timeoutId);
+    };
+
+    // Start the boot sequence
+    processStep(0);
+
+    // Cleanup function
+    return () => {
+      mountedRef.current = false;
+      timeoutIds.forEach(id => clearTimeout(id));
+    };
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 bg-black text-cyan-500 font-mono text-sm flex flex-col items-center justify-center z-[9999]">
+    <div className="fixed inset-0 bg-black text-cyan-500 font-mono text-xs flex flex-col items-center justify-center z-[9999]">
       <div className="relative mb-8">
-        <div className="animate-spin text-cyan-400" style={{ width: 96, height: 96 }}>
-          <svg 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="0.5"
-            className="w-full h-full"
-          >
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-          </svg>
-        </div>
+        <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-20 animate-pulse" />
+        <Hexagon size={96} className="relative z-10 animate-spin text-cyan-400" strokeWidth={0.5} />
         <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-3xl tracking-tighter">QF</div>
       </div>
       
       <div className="w-96 space-y-4">
-        <div className="flex justify-between text-xs uppercase text-slate-400">
-          <span>BOOT SEQUENCE</span>
+        <div className="flex justify-between text-[10px] uppercase text-slate-500">
+          <span>KERNEL_INIT_SEQUENCE</span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+        <div className="h-0.5 bg-slate-900 overflow-hidden relative">
           <div 
-            className="h-full bg-cyan-500 transition-all duration-300"
-            style={{ width: `${progress}%` }}
+            className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_20px_currentColor]" 
+            style={{ width: `${progress}%` }} 
           />
         </div>
-        <div className="text-center text-cyan-300 h-6 flex items-center justify-center">
-          {message}
-        </div>
-        <div className="text-xs text-slate-500 text-center mt-8">
-          QuantumFlow OS v19.1 Zenith
+        <div className="h-24 font-mono text-[10px] text-slate-500 flex flex-col-reverse overflow-hidden border-l border-slate-800 pl-3">
+          {log.map((l, i) => (
+            <div key={i} className="animate-in slide-in-from-left-2 fade-in">
+              <span className="text-cyan-600">OK</span> {l}...
+            </div>
+          )).reverse()}
         </div>
       </div>
     </div>
   );
-};          
+};
 
 // ============================================================================
 // LIVE WALLPAPER ENGINE
@@ -903,7 +922,7 @@ const QuantumFlowOS = () => {
     setApps(prev => prev.map(a => a.id === id ? { ...a, minimized: true, active: false } : a));
   };
 
-   const maximizeApp = (id) => {
+  const maximizeApp = (id) => {
     setApps(prev => prev.map(a => a.id === id ? { ...a, maximized: !a.maximized } : a));
   };
 
