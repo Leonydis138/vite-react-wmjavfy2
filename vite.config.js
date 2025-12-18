@@ -5,6 +5,19 @@ export default defineConfig({
   base: '/',
   plugins: [react()],
   server: {
-    host: true
+    host: true,
+    port: 3000
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          icons: ['lucide-react']
+        }
+      }
+    }
   }
 })
