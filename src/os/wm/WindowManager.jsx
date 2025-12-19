@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import React, { useState, useCallback } from "react";
 import Window from "./Window";
 
