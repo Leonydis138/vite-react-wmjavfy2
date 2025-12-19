@@ -1,3 +1,9 @@
+import CrashBoundary from "../kernel/CrashBoundary";
+
+<CrashBoundary>
+  <App />
+</CrashBoundary>
+
 import React, { useState } from "react";
 import { execute } from "../shell/CommandBus";
 
