@@ -1,20 +1,18 @@
-import { useEffect } from "react";
-useEffect(() => {
-  if (!apps || !autoLaunch) return;
-  autoLaunch.forEach((id) => openWindow(apps[id]));
-}, []);
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import Window from "./Window";
 
 let zCounter = 100;
 
-export default function WindowManager({ apps, autoLaunch = [] }) {
+export default function WindowManager({ apps = {}, autoLaunch = [] }) {
+  const [windows, setWindows] = useState([]);
 
   const openWindow = useCallback((app) => {
+    if (!app) return;
+
     setWindows((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id: Date.now() + Math.random(), // safe, deterministic
         app,
         x: 80 + prev.length * 20,
         y: 80 + prev.length * 20,
@@ -24,6 +22,11 @@ export default function WindowManager({ apps, autoLaunch = [] }) {
       },
     ]);
   }, []);
+
+  useEffect(() => {
+    if (!apps || autoLaunch.length === 0) return;
+    autoLaunch.forEach((id) => openWindow(apps[id]));
+  }, [apps, autoLaunch, openWindow]);
 
   const focus = (id) => {
     setWindows((prev) =>
@@ -52,13 +55,15 @@ export default function WindowManager({ apps, autoLaunch = [] }) {
         />
       ))}
 
-      {/* launcher (temporary, removed Phase 4) */}
-      <button
-        onClick={() => openWindow(apps.terminal)}
-        className="fixed bottom-4 left-4 bg-cyan-600 px-3 py-1 text-xs"
-      >
-        Open Terminal
-      </button>
+      {/* TEMP launcher (safe to remove later) */}
+      {apps.terminal && (
+        <button
+          onClick={() => openWindow(apps.terminal)}
+          className="fixed bottom-4 left-4 bg-cyan-600 px-3 py-1 text-xs text-black z-[9999]"
+        >
+          Open Terminal
+        </button>
+      )}
     </>
   );
 }
