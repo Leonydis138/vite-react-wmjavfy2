@@ -1,11 +1,14 @@
 import { useEffect } from "react";
+useEffect(() => {
+  if (!apps || !autoLaunch) return;
+  autoLaunch.forEach((id) => openWindow(apps[id]));
+}, []);
 import React, { useState, useCallback } from "react";
 import Window from "./Window";
 
 let zCounter = 100;
 
-export default function WindowManager({ apps }) {
-  const [windows, setWindows] = useState([]);
+export default function WindowManager({ apps, autoLaunch = [] }) {
 
   const openWindow = useCallback((app) => {
     setWindows((prev) => [
