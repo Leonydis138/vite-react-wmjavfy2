@@ -3,7 +3,14 @@ import { getSystemTime } from "./services/SystemClock";
 import { loadState, saveState } from "./services/Persistence";
 import { getCapabilities } from "./services/Capabilities";
 import { kernelStore } from "./state/KernelStore";
+import WindowManager from "./wm/WindowManager";
+import { AppRegistry } from "./apps/registry";
 
+return (
+  <div className="w-screen h-screen bg-black overflow-hidden">
+    <WindowManager apps={AppRegistry} />
+  </div>
+);
 export default function QuantumFlowOS() {
   const [booted, setBooted] = useState(false);
 
