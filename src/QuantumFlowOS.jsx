@@ -6,6 +6,18 @@ import { kernelStore } from "./state/KernelStore";
 import WindowManager from "./wm/WindowManager";
 import { AppRegistry } from "./apps/registry";
 
+export default function QuantumFlowOS() {
+  return (
+    <div className="w-screen h-screen bg-black overflow-hidden">
+      <WindowManager
+        apps={AppRegistry}
+        autoLaunch={["terminal"]}
+      />
+    </div>
+  );
+}
+import { AppRegistry } from "./apps/registry";
+
 return (
   <div className="w-screen h-screen bg-black overflow-hidden">
     <WindowManager apps={AppRegistry} />
