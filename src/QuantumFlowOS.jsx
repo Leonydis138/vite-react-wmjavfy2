@@ -3,32 +3,17 @@ import { getSystemTime } from "./services/SystemClock";
 import { loadState, saveState } from "./services/Persistence";
 import { getCapabilities } from "./services/Capabilities";
 import { kernelStore } from "./state/KernelStore";
+
 import WindowManager from "./wm/WindowManager";
 import { AppRegistry } from "./apps/registry";
 
 export default function QuantumFlowOS() {
-  return (
-    <div className="w-screen h-screen bg-black overflow-hidden">
-      <WindowManager
-        apps={AppRegistry}
-        autoLaunch={["terminal"]}
-      />
-    </div>
-  );
-}
-import { AppRegistry } from "./apps/registry";
-
-return (
-  <div className="w-screen h-screen bg-black overflow-hidden">
-    <WindowManager apps={AppRegistry} />
-  </div>
-);
-export default function QuantumFlowOS() {
   const [booted, setBooted] = useState(false);
 
   useEffect(() => {
-    // Boot sequence (real, deterministic)
+    // Kernel boot (real)
     const persisted = loadState();
+
     kernelStore.initialize({
       time: getSystemTime(),
       capabilities: getCapabilities(),
@@ -37,7 +22,7 @@ export default function QuantumFlowOS() {
 
     const bootTimer = setTimeout(() => {
       setBooted(true);
-    }, 600); // UX boot delay only (not fake data)
+    }, 600);
 
     return () => clearTimeout(bootTimer);
   }, []);
@@ -58,11 +43,17 @@ export default function QuantumFlowOS() {
   }
 
   return (
-    <div className="w-screen h-screen bg-black text-slate-200 overflow-hidden">
-      {/* Phase 2: WindowManager mounts here */}
-      <div className="p-4 text-sm opacity-80">
+    <div className="w-screen h-screen bg-black overflow-hidden">
+      {/* Desktop banner (optional) */}
+      <div className="absolute top-2 left-4 text-xs opacity-70 pointer-events-none">
         QuantumFlow OS — Kernel Online
       </div>
+
+      {/* USERLAND */}
+      <WindowManager
+        apps={AppRegistry}
+        autoLaunch={["terminal"]}
+      />
     </div>
   );
 }
