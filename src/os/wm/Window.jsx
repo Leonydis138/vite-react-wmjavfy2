@@ -1,4 +1,20 @@
-import React, { useRef } from "react";
+import { schedule } from "../kernel/Scheduler";
+
+let pending = null;
+
+const drag = (e) => {
+  pending = e;
+};
+
+schedule(() => {
+  if (!pending) return;
+  onMove(
+    data.id,
+    pending.clientX - offset.current.x,
+    pending.clientY - offset.current.y
+  );
+  pending = null;
+});
 
 export default function Window({ data, onFocus, onMove }) {
   const ref = useRef(null);
